@@ -17,23 +17,43 @@ Situation: You are working at Meta, and your supervisor’s supervisor walks in,
 This repository contains the required files for CS 898 - Image Analysis and Computer Vision (Wichita State University), including an AI_Log file to track AI usage (which I am deliberately avoiding), multi-step image processing output and scripts, and a fun hello_world animation just to add something more pragmatic to the repository.
 
 ## Setup & Installation:
-**AWT Progress**
+**Linux instructions:**
+```
+cd <RepoDir>
+python3 -m venv .venv
+source .venv/bin/activate
+pip3 install -r requirements.txt
+```
+
+**Windows Instructions:**
+
+[Follow this tutorial and then see above instructions.](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview)
 
 ## Usage and Execution:
-**Running hello_world:**
+**Running hello_world.py:**
 
 ```
 cd <RepoDir>/part01
 python3 hello_world.py
 ```
 
+**Running full pipeline:**
+```
+# Full pipeline execution (time consuming)
+bash ./run_full_pipeline.sh
+
+# Run isolated by calling python files individually from project root.
+# For example:
+python3 part02/basic_statistics.py
+```
+
 
 ## TODO:
 - [x] Add project title, author, course
 - [x] Include brief project overview and "alien image" context
-- [ ] Add **Setup & Installation** section [IP]
+- [x] Add **Setup & Installation** section
 - [ ] Add **Usage/Execution** section [IP]
-- [ ] **Results - Part 2** [IP]:
+- [x] **Results - Part 2**:
   - Image statistics table for original channels
   - Show/save examples of greyscale/binary/color spaces + normalized RGB
   - Affine transformations summary + sample images
@@ -48,3 +68,6 @@ python3 hello_world.py
 - [ ] Add badges (Python, OpenCV) and license if applicable
 - [ ] Clean up: remove full assignment text or move to separate file; keep only relevant summary
 - [ ] Ensure all images/plots are linked properly and render in GitHub
+- [ ] Create run_full_pipeline.sh
+- [ ] Refactor decision_making method to reduce time complexity of future assignments [AWT downtime]
+- [ ] Make more coffee [IP]
