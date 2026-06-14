@@ -40,6 +40,7 @@ python3 hello_world.py
 **Running full pipeline:**
 ```
 # Full pipeline execution (time consuming)
+# Use --skip to skip confirmation between steps
 bash ./run_full_pipeline.sh
 
 # Run isolated by calling python files individually from project root.
@@ -52,22 +53,22 @@ python3 part02/basic_statistics.py
 - [x] Add project title, author, course
 - [x] Include brief project overview and "alien image" context
 - [x] Add **Setup & Installation** section
-- [ ] Add **Usage/Execution** section [IP]
-- [x] **Results - Part 2**:
-  - Image statistics table for original channels
-  - Show/save examples of greyscale/binary/color spaces + normalized RGB
-  - Affine transformations summary + sample images
-  - Gaussian blur discussion + examples for different sigma values
+- [x] Add **Usage/Execution** section
+- [ ] **Results - Part 2**:
+  - [ ] Image statistics table for original channels
+  - [ ] Show/save examples of greyscale/binary/color spaces + normalized RGB
+  - [x] Affine transformations summary + sample images
+  - [ ] Gaussian blur discussion + examples for different sigma values
 - [ ] **Results - Part 3**:
-  - Edge detection analysis (pros/cons + which worked best)
-  - Embed 6 random 5-image comparison plots
-  - Summary of total images generated
+  - [x] Edge detection analysis (pros/cons + which worked best)
+  - [ ] Embed 6 random 5-image comparison plots
+  - [ ] Summary of total images generated
 - [x] Link to `AI_Log.md` and key AI-assisted parts
 - [ ] Add **Discussion/Conclusions** (key learnings, challenges, observations)
-- [ ] Include table of contents for navigation
-- [ ] Add badges (Python, OpenCV) and license if applicable
-- [ ] Clean up: remove full assignment text or move to separate file; keep only relevant summary
+- [x] ~~Include table of contents for navigation~~ Not Required
+- [x] ~~Add badges (Python, OpenCV) and license if applicable~~ Not Required
+- [ ] Clean up. ~~: remove full assignment text or move to separate file; keep only relevant summary~~
 - [ ] Ensure all images/plots are linked properly and render in GitHub
-- [ ] Create run_full_pipeline.sh
-- [ ] Refactor decision_making method to reduce time complexity of future assignments [AWT downtime]
-- [ ] Make more coffee [IP]
+- [x] Create run_full_pipeline.sh
+- [x] ~~Refactor decision_making method to reduce time complexity of future assignments [AWT downtime]~~ Moved to feature requests.
+- [x] Make more coffee

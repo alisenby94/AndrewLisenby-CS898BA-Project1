@@ -25,7 +25,9 @@ import cv2
 
 from common.utils import print_title, pretty_print
 from common.image_io import load_image, save_image
+from common.metadata import update_metadata
 from common import SOURCE_IMAGE
+from part02 import COLORSPACE_LABELS
 
 def convert_color_spaces(img):
     """3 Image stats and image processing.ipynb [2]"""
@@ -81,6 +83,13 @@ def main():
     for name, converted in images.items():
         save_image(converted, f"part02/colorspaces/{name}.png")
         pretty_print(f"Saving {name}.png", "DONE")
+
+    # Record the trajectory so far
+    update_metadata({
+        name: {"steps": ["Original", COLORSPACE_LABELS[name]]}
+        for name in images
+    })
+    pretty_print("Metadata written", "assets/part02/metadata.json")
 
     print('-' * 70)
     pretty_print("Total images", f"{len(images)}")

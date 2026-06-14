@@ -31,6 +31,7 @@ from tqdm import tqdm
 
 from common.utils import pretty_format, print_title, pretty_print
 from common.image_io import load_image, save_image, list_images
+from common.metadata import load_metadata, update_metadata
 from part02 import COLORSPACE_NAMES, SIGMAS
 
 def gaussian_kernel_1d(sigma, kernel_size=5):
@@ -59,16 +60,21 @@ def blur_and_save(all_images, sigmas):
     """Blur each image at every sigma and save immediately to improve memory usage."""
     count = 0
     total = len(all_images) * len(sigmas)
+    meta = load_metadata()
+    entries = {}
     pretty_print("Saving blurred images to:", "assets/part02/blurred/", width=35, value_width=35)
     print('-' * 70)
-    with tqdm(total=total, desc="Blurring", unit="img") as bar:
+    with tqdm(total=total, desc="Blurring", unit="img", ncols=70) as bar:
         for img_name, img in all_images:
+            parent_steps = meta.get(img_name, {}).get("steps", ["Original"])
             for sigma in sigmas:
                 name = f"{img_name}_blur_s{sigma}"
                 save_image(gaussian_blur(img, sigma), f"part02/blurred/{name}.png")
+                entries[name] = {"steps": parent_steps + [f"Gaussian Blur(\u03c3:{sigma})"]}
                 count += 1
                 tqdm.write(pretty_format(f"Saving blurred/{name}.png", "DONE", width=66, value_width=4))
                 bar.update(1)
+    update_metadata(entries)
     return count
 
 
@@ -82,10 +88,10 @@ def main():
 
     blurred = blur_and_save(all_images, SIGMAS)
     print('-' * 70)
-    pretty_print("Sigma levels per image", len(SIGMAS), width=40)
-    pretty_print("Source images", len(all_images), width=40)
-    pretty_print("Blurred images", blurred, width=40)
-    pretty_print("Total images", len(all_images) + blurred, width=40)
+    pretty_print("Sigma levels per image", len(SIGMAS))
+    pretty_print("Source images", len(all_images))
+    pretty_print("Blurred images", blurred)
+    pretty_print("Total images", len(all_images) + blurred)
     print()
 
 
