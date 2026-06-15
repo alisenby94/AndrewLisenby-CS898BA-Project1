@@ -110,13 +110,13 @@ The results between sobel and prewitt tracked one another so closely it is hard 
 
 Laplacian also seemed to do best with the normalized high sigma images, but didn't generate coherent edges on most other color spaces.
 
-| Settings | Image |
+| Settings | Sobel Edges |
 | --- | --- |
 | Normalized Blur Sigma 0.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s0.5_k5.png) |
 | Normalized Blur Sigma 3.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s3.5_k5.png) |
 | Normalized Blur Sigma 3.5 Kernel 23 | ![](assets/featured/sobel_normalized_blur_s3.5_k23.png) |
 
-Above is the previously discussed performance comparison of various kernel size/sigma combinations. Higher sigma values performed better than lower, presumably due to its ability to filter noise while preserving edge features. Appropriately sizing the kernel amplified this result by filtering over a larger area, leading to an overall smoother surface texture.
+Above is the previously discussed performance comparison of various kernel size/sigma combinations (using Sobel). Higher sigma values performed better than lower, presumably due to its ability to filter noise while preserving edge features. Appropriately sizing the kernel amplified this result by filtering over a larger area, leading to an overall smoother surface texture.
 
 |hls_blur_s1.5|
 | --- |
@@ -141,27 +141,3 @@ Above is the previously discussed performance comparison of various kernel size/
 |normalized_translate_neg100_neg80|
 | --- |
 |![](assets/featured/normalized_translate_neg100_neg80.png)|
-
-## TODO:
-- [x] Add project title, author, course
-- [x] Include brief project overview and "alien image" context
-- [x] Add **Setup & Installation** section
-- [x] Add **Usage/Execution** section
-- [x] **Results - Part 2**:
-  - [x] Image statistics table for original channels
-  - [x] ~~Show/save examples of greyscale/binary/color spaces + normalized RGB~~ Not Required To Show
-  - [x] ~~Affine transformations summary + sample images~~ Not Required To Show
-  - [x] Gaussian blur discussion + examples for different sigma values
-- [x] **Results - Part 3**:
-  - [x] Edge detection analysis (pros/cons + which worked best)
-  - [x] Embed 6 random 5-image comparison plots
-  - [x] Summary of total images generated
-- [x] Link to `AI_Log.md` and key AI-assisted parts
-- [x] ~~Add **Discussion/Conclusions** (key learnings, challenges, observations)~~ Not required and covered in results
-- [x] ~~Include table of contents for navigation~~ Not Required
-- [x] ~~Add badges (Python, OpenCV) and license if applicable~~ Not Required
-- [ ] Clean up. ~~: remove full assignment text or move to separate file; keep only relevant summary~~
-- [ ] Ensure all images/plots are linked properly and render in GitHub
-- [x] Create run_full_pipeline.sh
-- [x] ~~Refactor decision_making method to reduce time complexity of future assignments [AWT downtime]~~ Moved to feature requests.
-- [x] Make more coffee
