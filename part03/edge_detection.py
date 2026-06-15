@@ -88,7 +88,12 @@ def laplacian_edges(gray):
 
 
 def canny_edges(gray):
-    return cv2.Canny(gray, 100, 200)
+    # Converted to Adaptive Thresholds. Fixed bounds were generating completely black frames.
+    v = float(np.median(gray))
+    sigma = 0.33
+    lo = int(max(0, (1.0 - sigma) * v))
+    hi = int(min(255, (1.0 + sigma) * v))
+    return cv2.Canny(gray, lo, hi)
 
 
 def prewitt_edges(gray):

@@ -47,7 +47,8 @@ def gaussian_kernel_1d(sigma, kernel_size=5):
 
 def gaussian_blur(img, sigma):
     """[3] Apply Gaussian blur to an image in 2 convolutions."""
-    k = gaussian_kernel_1d(sigma)
+    # The kernel was dynamized to the 3-sigma rule (a good enough heuristic) to make the blur more visually distinct at higher sigmas.
+    k = gaussian_kernel_1d(sigma, kernel_size=2 * int(np.ceil(3 * sigma)) + 1)
     out = img.astype(np.float64)
     # vertical
     out = convolve1d(out, k, axis=0)
