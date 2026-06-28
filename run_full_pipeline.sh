@@ -34,7 +34,7 @@ run() {
 }
 
 # Welcome message.
-log "CS898BA Project 1 - Full Pipeline Runner"
+log "CS898BA Homework 2 - Segmentation Pipeline Runner"
 log "Log: $LOG"
 
 # Create, activate, and install dependencies in python virtual environment.
@@ -47,12 +47,11 @@ source "$VENV/bin/activate"
 log "Installing requirements..."
 "$VENV/bin/pip" install -r requirements.txt 2>&1 | tee -a "$LOG"
 
-# Finally run the pipeline parts in order. Skipping hello world.
-run "Part 2 - Basic statistics"   part02/basic_statistics.py
-run "Part 2 - Color spaces"       part02/color_spaces.py
-run "Part 2 - Affine transforms"  part02/affine_transforms.py
-run "Part 2 - Gaussian blur"      part02/gaussian_blur.py
-run "Part 3 - Edge detection"     part03/edge_detection.py
+# Run the segmentation parts in order. Each one depends on Part 2's output.
+run "Part 2 - Normalization"       part02/normalization.py
+run "Part 3 - Thresholding"        part03/thresholding.py
+run "Part 4 - K-Means clustering"  part04/kmeans.py
+run "Part 5 - Evaluation"          part05/evaluation.py
 
 # Done.
 log "\nPipeline complete ($(date '+%F %T'))."

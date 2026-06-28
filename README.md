@@ -1,4 +1,4 @@
-# HW1: CS 898BA – Image Analysis and Computer Vision
+# HW2: CS 898BA – Image Analysis and Computer Vision
 
 Andrew Lisenby, B.S.
 
@@ -6,15 +6,17 @@ Wichita State University
 
 ## Assignment
 
-Purpose: To apply basic image analysis and processing techniques.
+**Purpose:** To apply and evaluate classical and optimization-based image segmentation techniques.
 
-Situation: You are working at Meta, and your supervisor’s supervisor walks in, gasping for air. You don’t often interact with him, so this visit is strange. He opens a folder on his personal computer and shows you an image he thinks is an alien, captured by his doorbell camera. You are not convinced and think he is just seeing things. He came to see you because he heard you took an image analysis course in college and wants you to clean up the image so it is easier to make out what is in it.
+**Situation:** Your supervisor’s supervisor is back. After reviewing your edge detection plots from Homework One, he is convinced that the "alien" has a distinct torso and head structure. He wants you to isolate the entity from the background completely and mutters something about "extracting the exact pixel area for a bio-mass calculation" before rushing out to a meeting.
+
+Since you already have a repository and a solid pipeline, you decide to waste more time by using image segmentation to isolate the figure.
 
 ![Grey alien captured on camera drinking a vintage 25oz Foster's Lager on his way to visit bigfoot.](assets/HW1_IMG_CS898BA.png)
 
 ## Description
 
-This repository contains the required files for CS 898 - Image Analysis and Computer Vision (Wichita State University), including an AI_Log file to track AI usage (which I am deliberately avoiding), multi-step image processing output and scripts, and a fun hello_world animation just to add something more pragmatic to the repository.
+This repository contains the required files for CS 898 - Image Analysis and Computer Vision (Wichita State University), including an AI_Log file to track AI usage (which I am deliberately avoiding). Homework Two builds on the Homework One pipeline, adding image segmentation: multi-channel normalization, threshold and clustering based segmentation, and evaluation against a pseudo-ground-truth reference mask.
 
 ## Setup & Installation:
 **Linux instructions:**
@@ -30,114 +32,90 @@ pip3 install -r requirements.txt
 [Follow this tutorial and then see above instructions.](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview)
 
 ## Usage and Execution:
-**Running hello_world.py:**
 
+**Running the full pipeline:**
 ```
-cd <RepoDir>/part01
-python3 hello_world.py
-```
-
-**Running full pipeline:**
-```
-# Full pipeline execution (time consuming)
-# Use --skip to skip confirmation between steps
+# Runs Parts 2-5 in order; use --skip to skip the pause between steps.
 bash ./run_full_pipeline.sh
 
-# Run isolated by calling python files individually from project root.
-# For example:
-python3 part02/basic_statistics.py
+# Or run parts individually from the project root:
+python3 part02/normalization.py
 ```
 
 ## Results and Discussion:
 
-### Part 2:
+> For a full set of generated images, run `run_full_pipeline.sh`. The full set was omitted to avoid bloating the repo.
 
-**Image Metadata**
+### Part 2: Multi-Channel Normalization
 
-| Statistic | Value |
-| --- | --- |
-| Image Shape: | (1536, 2816, 3) |
-| Data Type: | uint8 |
-| Number of Channels: | 3 |
-| Total Pixels: | 12976128 |
+Histogram equalization is applied independently to each BGR channel, then the channels are merged back into a normalized color image that serves as the input for every subsequent step. Equalization spreads each channel across the full intensity range, pulling the very dark original means toward the center:
 
-
-**Channel Statistics**
-
-| Statistic | Blue Value | Green Value | Red Value |
-| --- | --- | --- | --- |
-|Min:|0|0|0|
-|Max:|255|255|255|
-|Mean:|21.83|24.64|20.61|
-|Median:|10.00|16.00|12.00|
-|Mode:|4|10|4|
-|Range:|255|255|255|
-|Std Dev:|26.23|22.23|22.46|
-|Variance:|687.99|493.96|504.26|
-|Skew:|1.68|1.76|2.11|
-
-From the statistics, we can see that the image is about 13MP, and the channel with the greatest variance is blue. The mean values all sit in the low 20s which is very low in the total range, despite the full uint8 range being used. That suggests to me that the image is dark as a result of being underexposed.
-
-**NOTE:** The full set of generated images are not packaged with this repo to preserve space; they can easily be generated in about 3 minutes with the run_full_pipeline.sh script.
-
-**Gaussian Blur:**
-
-For this step I manually implemented Gaussian Blur for my understanding. I implemented it as a separable 2-pass 1D kernel. This reduces compute per kernel to O(2k) vs single pass 2D kernel compute of O(k^2).
-
-The kernel size was originally hard coded to 5, after starting to write this discussion I noticed that the sigma value was not exhibiting the trait I was expecting. The kernel size was subsequently dynamized to the 3-sigma rule 2⌈3σ⌉+1 and regenerated.
-
-Sigma was set to 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5. These values of sigma and the kernel effect the edge preservation and span of the blur. Lower sigma values allowed distant neighboring values in the kernel to have a more profound effect on the relevant pixel (lower weight decay).
-
-**Example:**
-
-| Settings | Image |
-| --- | --- |
-| Normalized Blur Sigma 0.5 Kernel 5 | ![](assets/featured/normalized_blur_s0.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 5 | ![](assets/featured/normalized_blur_s3.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 23 | ![](assets/featured/normalized_blur_s3.5_k23.png) |
-
-| Normalized Blur Sigma 0.5 Kernel 5 Zoomed | Normalized Blur Sigma 3.5 Kernel 5 Zoomed | Normalized Blur Sigma 3.5 Kernel 23 Zoomed |
+| Channel | Original Mean | Normalized Mean |
 | --- | --- | --- |
-| ![](assets/featured/normalized_blur_s0.5_k5_zoomed.png) | ![](assets/featured/normalized_blur_s3.5_k5_zoomed.png) | ![](assets/featured/normalized_blur_s3.5_k23_zoomed.png) |
+| Blue | 21.8 | 127.2 |
+| Green | 24.6 | 130.3 |
+| Red | 20.6 | 127.9 |
 
-Notice the reduction in noise between Sigma 3.5 K5 and K23. The image is much smoother, despite not losing significant edge definition. I will illustrate the kernel size relevance further during edge detection.
+### Part 3: Threshold-Based Segmentation
 
-### Part 3: 
+Both methods operate on the grayscale of the normalized image. Otsu selected a global threshold of 129; adaptive thresholding uses a Gaussian-weighted local mean (block size of 51, C=5). Each method saves a binary mask and a color foreground extraction.
 
-Without any semblance of a doubt Canny was NOT the edge detection that was appropriate for this image. I tuned Canny per-image after an initial run with static values, and it still performed poorly with nearly all of the generated images. The best class of image were the normalized and blurred images since it works by thresholding intensities.
+### Part 4: K-Means Color Clustering
 
-The results between sobel and prewitt tracked one another so closely it is hard to name a clear winner; both performed very well on the high sigma normalized images the best when values were higher.
+K-Means is run in HSV space for K = 3, 4, 5. For each K, every cluster's binary mask is scored against the hand-drawn reference, and the best-matching cluster is kept. The optimal K is the one whose best cluster most closely captures the figure:
 
-Laplacian also seemed to do best with the normalized high sigma images, but didn't generate coherent edges on most other color spaces.
+| K | Best Cluster | IoU |
+| --- | --- | --- |
+| 3 | #2 | 0.128 |
+| 4 | #1 | 0.130 |
+| **5** | **#3** | **0.223** |
 
-| Settings | Sobel Edges |
-| --- | --- |
-| Normalized Blur Sigma 0.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s0.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s3.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 23 | ![](assets/featured/sobel_normalized_blur_s3.5_k23.png) |
+**Chosen K=5.**
 
-Above is the previously discussed performance comparison of various kernel size/sigma combinations (using Sobel). Higher sigma values performed better than lower, presumably due to its ability to filter noise while preserving edge features. Appropriately sizing the kernel amplified this result by filtering over a larger area, leading to an overall smoother surface texture.
+**Error maps** — best-overlap cluster of each K (green = true positive, red = false positive, blue = false negative):
 
-|hls_blur_s1.5|
-| --- |
-|![](assets/featured/hls_blur_s1.5.png)|
+![K-Means error maps](assets/featured/kmeans_error_maps.png)
 
-|hsv_blur_s2.5|
-| --- |
-|![](assets/featured/hsv_blur_s2.5.png)|
+The cluster value that achieved both the best ground truth coverage, and minimum error, was K=5. Further testing suggested that K=7 would have performed even better, but increasing it beyond 7 reduced the IoU and decreased the overall size due to capturing less diverse clusters.
 
-|hsv_scale_0.8_blur_s2.5|
-| --- |
-|![](assets/featured/hsv_scale_0.8_blur_s2.5.png)|
+### Part 5: Evaluation and Analysis
 
-|hsv_shear_x_0.10_blur_s2.0|
-| --- |
-|![](assets/featured/hsv_shear_x_0.10_blur_s2.0.png)|
+Each segmentation is scored against the hand-drawn reference mask using IoU (Jaccard index) and the Dice coefficient:
 
-|lab_translate_150_neg100_blur_s1.0|
-| --- |
-|![](assets/featured/lab_translate_150_neg100_blur_s1.0.png)|
+| Method | IoU | Dice |
+| --- | --- | --- |
+| Otsu | 0.026 | 0.051 |
+| Adaptive | 0.055 | 0.104 |
+| **K-Means (K=5)** | **0.223** | **0.364** |
 
-|normalized_translate_neg100_neg80|
-| --- |
-|![](assets/featured/normalized_translate_neg100_neg80.png)|
+**Comparison plot** — original, normalized, reference, and the three segmentation masks:
+
+![Segmentation comparison](assets/featured/segmentation_comparison.png)
+
+**Error maps** — per-method IoU breakdown (green = true positive, red = false positive, blue = false negative):
+
+![Segmentation error maps](assets/featured/segmentation_error_maps.png)
+
+As you can see from the red (fp) pixels alone, K-means is the clear winner. Adaptive focused on local intensities and performed poorly, particularly in the textured areas, like the grass. This is presumably because the local Gaussian distribution fires more aggressively in noisy regions. Otsu was a the worst, a single global threshold simply cannot adequately capture the contrastive qualities of this photo, instead it captured the Vignette-like lighting well, focusing primarily on the highest intensity regions, like the sky and houses.
+
+## Additional Findings (Exploratory)
+
+> These experiments go beyond the assignment scope (which capped K at 5). They are included as personal investigation into the K-Means failure modes and are not part of the graded pipeline.
+
+### Channel-Wise Pre-Blur Before Clustering
+
+Histogram equalization maximizes contrast but also amplifies per-pixel noise, which scatters the figure's body across neighboring clusters. Applying a channel-wise Gaussian blur (kernel sized by the 3-sigma rule, `2⌈3σ⌉+1`) to the normalized image before clustering denoises each channel and makes the figure more color-homogeneous. Sweeping sigma against K = 3, 5, 7 and scoring the best-overlap cluster against the reference mask:
+
+| σ \ K | K=3 | K=5 | K=7 |
+| --- | --- | --- | --- |
+| none | 0.128 | 0.194 | 0.217 |
+| 1.0 | 0.167 | 0.188 | 0.227 |
+| 2.0 | 0.191 | 0.186 | 0.230 |
+| 4.0 | 0.189 | 0.184 | **0.250** |
+| 8.0 | 0.132 | 0.218 | 0.249 |
+
+![Pre-blur IoU vs sigma](assets/featured/preblur_kmeans_curve.png)
+
+![Pre-blur error maps across sigma and K](assets/featured/preblur_kmeans_maps.png)
+
+Like above, K=7 had the greatest result, but the best result per cluster scaled almost uniformly with sigma. This suggests that noise in the image is actively destructive to clustering performance, and smoothing the texture/noise features reduces outliers that cannot be sufficiently captured.

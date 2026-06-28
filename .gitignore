@@ -1,5 +1,7 @@
 .venv/
 __pycache__/
 archive/
-assets/part*
+assets/part02/
+assets/part03/
+assets/part04/
 logs/
