@@ -3,3 +3,9 @@ __pycache__/
 archive/
 assets/part*
 logs/
+
+# HW3 Dataset and model weights
+assets/Fish.7z
+assets/Fish/
+**/*.pt
+**/*.pth
