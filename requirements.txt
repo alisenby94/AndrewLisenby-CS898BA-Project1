@@ -1,5 +1,6 @@
-opencv-python
-numpy
-scipy
-tqdm
+# Torch was installed seperately. I had to do a Blackwell architecture workaround for my 5090.
+scikit-learn
 matplotlib
+pillow
+numpy
+py7zr

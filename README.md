@@ -1,4 +1,4 @@
-# HW1: CS 898BA – Image Analysis and Computer Vision
+# HW3: CS 898BA – Image Analysis and Computer Vision
 
 Andrew Lisenby, B.S.
 
@@ -6,17 +6,18 @@ Wichita State University
 
 ## Assignment
 
-Purpose: To apply basic image analysis and processing techniques.
+**Purpose:** To design, train, and evaluate a convolutional neural network (CNN) from scratch for a multi-class image classification task, then improve it through hyperparameter tuning.
 
-Situation: You are working at Meta, and your supervisor’s supervisor walks in, gasping for air. You don’t often interact with him, so this visit is strange. He opens a folder on his personal computer and shows you an image he thinks is an alien, captured by his doorbell camera. You are not convinced and think he is just seeing things. He came to see you because he heard you took an image analysis course in college and wants you to clean up the image so it is easier to make out what is in it.
+**Task:** Classify aquarium fish images into six species (Betta, Crayfish, Discus, Goldfish, Guppy, Oscar) using a custom CNN built in PyTorch. Establish a baseline model, tune it via grid search, and analyze the results.
 
-![Grey alien captured on camera drinking a vintage 25oz Foster's Lager on his way to visit bigfoot.](assets/HW1_IMG_CS898BA.png)
+![Optimized vs. baseline training curves and confusion matrix.](assets/featured/comparison_grid.png)
 
 ## Description
 
-This repository contains the required files for CS 898 - Image Analysis and Computer Vision (Wichita State University), including an AI_Log file to track AI usage (which I am deliberately avoiding), multi-step image processing output and scripts, and a fun hello_world animation just to add something more pragmatic to the repository.
+This repository contains the required files for CS 898 - Image Analysis and Computer Vision (Wichita State University), including an AI_Log file to track AI usage (which I am deliberately avoiding). Homework 3 deviates from the Homework 1-2 pipelines and only reused basic utils for pretty-print functionality.
 
-## Setup & Installation:
+## Setup & Installation
+
 **Linux instructions:**
 ```
 cd <RepoDir>
@@ -25,119 +26,114 @@ source .venv/bin/activate
 pip3 install -r requirements.txt
 ```
 
-**Windows Instructions:**
+## Usage and Execution
 
-[Follow this tutorial and then see above instructions.](https://ubuntu.com/tutorials/install-ubuntu-desktop#1-overview)
-
-## Usage and Execution:
-**Running hello_world.py:**
-
+**Running the full pipeline** (sets up the venv, extracts the dataset, and runs Parts 2–5):
 ```
-cd <RepoDir>/part01
-python3 hello_world.py
-```
-
-**Running full pipeline:**
-```
-# Full pipeline execution (time consuming)
-# Use --skip to skip confirmation between steps
 bash ./run_full_pipeline.sh
-
-# Run isolated by calling python files individually from project root.
-# For example:
-python3 part02/basic_statistics.py
 ```
 
-## Results and Discussion:
+**Running parts individually** from the project root:
+```
+python3 part02/data.py      # data split summary
+python3 part03/train.py     # baseline training
+python3 part04/tune.py      # grid search
+python3 part05/evaluate.py  # evaluation & comparison grid
+```
 
-### Part 2:
+## Results and Discussion
 
-**Image Metadata**
+> NOTE: The Assignment does not specify that we should implement checkpointing OR early stop. This means that the "best model" chosen for comparison is the final epoch weights for each model. This is not the best version of each model which potentially distorts the results. The choice was made to disregard this fact and follow the instructions as they were stated.
 
-| Statistic | Value |
+### Part 2: Data pipeline
+
+The dataset has 1016 images across six classes and is moderately imbalanced. A stratified split preserves the class ratios across the train/val/test partitions.
+
+| Class | Images |
 | --- | --- |
-| Image Shape: | (1536, 2816, 3) |
-| Data Type: | uint8 |
-| Number of Channels: | 3 |
-| Total Pixels: | 12976128 |
+| Bete | 194 |
+| Cray | 80 |
+| Discuss | 201 |
+| Gold | 207 |
+| Guppy | 189 |
+| Oscar | 145 |
+| **Total** | **1016** |
 
+Split (seed 42): **710 train / 153 val / 153 test**. Training images are randomly flipped/rotated for augmentation; validation and test images are only resized so evaluation stays deterministic.
 
-**Channel Statistics**
+### Part 3: Baseline CNN
 
-| Statistic | Blue Value | Green Value | Red Value |
-| --- | --- | --- | --- |
-|Min:|0|0|0|
-|Max:|255|255|255|
-|Mean:|21.83|24.64|20.61|
-|Median:|10.00|16.00|12.00|
-|Mode:|4|10|4|
-|Range:|255|255|255|
-|Std Dev:|26.23|22.23|22.46|
-|Variance:|687.99|493.96|504.26|
-|Skew:|1.68|1.76|2.11|
+The baseline is a 3-block CNN: convolutional blocks with filter sizes 32, 64, and 128, ReLU activation.
 
-From the statistics, we can see that the image is about 13MP, and the channel with the greatest variance is blue. The mean values all sit in the low 20s which is very low in the total range, despite the full uint8 range being used. That suggests to me that the image is dark as a result of being underexposed.
+The classifier flattens the [128, 16, 16] input to [1, 32768], followed by a 256 channel fully-connected hidden layer, and a 6 channel output. Trained for 30 epochs with Adam (lr = 1e-3, batch = 32, dropout = 0.0) and cross-entropy loss.
 
-**NOTE:** The full set of generated images are not packaged with this repo to preserve space; they can easily be generated in about 3 minutes with the run_full_pipeline.sh script.
-
-**Gaussian Blur:**
-
-For this step I manually implemented Gaussian Blur for my understanding. I implemented it as a separable 2-pass 1D kernel. This reduces compute per kernel to O(2k) vs single pass 2D kernel compute of O(k^2).
-
-The kernel size was originally hard coded to 5, after starting to write this discussion I noticed that the sigma value was not exhibiting the trait I was expecting. The kernel size was subsequently dynamized to the 3-sigma rule 2⌈3σ⌉+1 and regenerated.
-
-Sigma was set to 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5. These values of sigma and the kernel effect the edge preservation and span of the blur. Lower sigma values allowed distant neighboring values in the kernel to have a more profound effect on the relevant pixel (lower weight decay).
-
-**Example:**
-
-| Settings | Image |
+| Metric | Value |
 | --- | --- |
-| Normalized Blur Sigma 0.5 Kernel 5 | ![](assets/featured/normalized_blur_s0.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 5 | ![](assets/featured/normalized_blur_s3.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 23 | ![](assets/featured/normalized_blur_s3.5_k23.png) |
+| Final val accuracy | 0.895 |
+| Best val accuracy | 0.902 (epoch 24) |
+| Test accuracy | 0.856 |
 
-| Normalized Blur Sigma 0.5 Kernel 5 Zoomed | Normalized Blur Sigma 3.5 Kernel 5 Zoomed | Normalized Blur Sigma 3.5 Kernel 23 Zoomed |
-| --- | --- | --- |
-| ![](assets/featured/normalized_blur_s0.5_k5_zoomed.png) | ![](assets/featured/normalized_blur_s3.5_k5_zoomed.png) | ![](assets/featured/normalized_blur_s3.5_k23_zoomed.png) |
+![Baseline training curves.](assets/featured/baseline_curves.png)
 
-Notice the reduction in noise between Sigma 3.5 K5 and K23. The image is much smoother, despite not losing significant edge definition. I will illustrate the kernel size relevance further during edge detection.
+The training curves show the model converging within ~25 epochs, with the train/val gap widening slightly and a validation spike toward the end. This suggests it was beginning to overfit.
 
-### Part 3: 
+### Part 4: Hyperparameter tuning
 
-Without any semblance of a doubt Canny was NOT the edge detection that was appropriate for this image. I tuned Canny per-image after an initial run with static values, and it still performed poorly with nearly all of the generated images. The best class of image were the normalized and blurred images since it works by thresholding intensities.
+A grid search over 12 configurations was run, reseeding before each so the configs are compared on equal footing:
 
-The results between sobel and prewitt tracked one another so closely it is hard to name a clear winner; both performed very well on the high sigma normalized images the best when values were higher.
+- Learning rate: `1e-2`, `1e-3`, `1e-4`
+- Batch size: `32`, `64`
+- Dropout: `0.3`, `0.5`
 
-Laplacian also seemed to do best with the normalized high sigma images, but didn't generate coherent edges on most other color spaces.
+Each config was trained for 30 epochs; the winner was selected by **lowest final validation loss** (see note above).
 
-| Settings | Sobel Edges |
-| --- | --- |
-| Normalized Blur Sigma 0.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s0.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 5 | ![](assets/featured/sobel_normalized_blur_s3.5_k5.png) |
-| Normalized Blur Sigma 3.5 Kernel 23 | ![](assets/featured/sobel_normalized_blur_s3.5_k23.png) |
+| lr | batch | dropout | val loss | final val acc | best val acc |
+| --- | --- | --- | --- | --- | --- |
+| 0.01 | 32 | 0.3 | 0.971 | 0.784 | 0.804 |
+| 0.01 | 32 | 0.5 | 0.591 | 0.824 | 0.830 |
+| 0.01 | 64 | 0.3 | 0.739 | 0.837 | 0.843 |
+| 0.01 | 64 | 0.5 | 0.879 | 0.627 | 0.654 |
+| 0.001 | 32 | 0.3 | 0.746 | 0.869 | 0.895 |
+| 0.001 | 32 | 0.5 | 0.765 | 0.869 | 0.876 |
+| 0.001 | 64 | 0.3 | 0.760 | 0.876 | 0.882 |
+| **0.001** | **64** | **0.5** | **0.535** | 0.850 | 0.876 |
+| 0.0001 | 32 | 0.3 | 0.625 | 0.784 | 0.817 |
+| 0.0001 | 32 | 0.5 | 0.690 | 0.784 | 0.824 |
+| 0.0001 | 64 | 0.3 | 0.723 | 0.752 | 0.784 |
+| 0.0001 | 64 | 0.5 | 0.734 | 0.758 | 0.758 |
 
-Above is the previously discussed performance comparison of various kernel size/sigma combinations (using Sobel). Higher sigma values performed better than lower, presumably due to its ability to filter noise while preserving edge features. Appropriately sizing the kernel amplified this result by filtering over a larger area, leading to an overall smoother surface texture.
+**Best configuration:** lr = 1e-3, batch = 64, dropout = 0.5 (val loss 0.535).
 
-|hls_blur_s1.5|
-| --- |
-|![](assets/featured/hls_blur_s1.5.png)|
+![Optimized training curves.](assets/featured/optimized_curves.png)
 
-|hsv_blur_s2.5|
-| --- |
-|![](assets/featured/hsv_blur_s2.5.png)|
+The high learning rate (1e-2) runs were unstable (one collapsed), while the low learning rate (1e-4) runs underfit within 30 epochs. The mid learning rate (1e-3) was the strongest across all permutations. Dropout of 0.5 produced the lowest validation loss (more confident), which is why it won on the loss criterion even though its raw accuracy was not the highest.
 
-|hsv_scale_0.8_blur_s2.5|
-| --- |
-|![](assets/featured/hsv_scale_0.8_blur_s2.5.png)|
+### Part 5: Evaluation & analysis
 
-|hsv_shear_x_0.10_blur_s2.0|
-| --- |
-|![](assets/featured/hsv_shear_x_0.10_blur_s2.0.png)|
+Both models were evaluated on the held-out test set.
 
-|lab_translate_150_neg100_blur_s1.0|
-| --- |
-|![](assets/featured/lab_translate_150_neg100_blur_s1.0.png)|
+**Baseline (test accuracy 0.856):**
 
-|normalized_translate_neg100_neg80|
-| --- |
-|![](assets/featured/normalized_translate_neg100_neg80.png)|
+| Class | Accuracy | Precision | Recall | F1 |
+| --- | --- | --- | --- | --- |
+| Bete | 0.759 | 0.957 | 0.759 | 0.846 |
+| Cray | 0.667 | 0.500 | 0.667 | 0.571 |
+| Discuss | 0.967 | 0.829 | 0.967 | 0.892 |
+| Gold | 0.903 | 0.933 | 0.903 | 0.918 |
+| Guppy | 1.000 | 0.906 | 1.000 | 0.951 |
+| Oscar | 0.682 | 0.882 | 0.682 | 0.769 |
+
+**Optimized (test accuracy 0.830):**
+
+| Class | Accuracy | Precision | Recall | F1 |
+| --- | --- | --- | --- | --- |
+| Bete | 0.724 | 0.808 | 0.724 | 0.764 |
+| Cray | 0.667 | 0.667 | 0.667 | 0.667 |
+| Discuss | 0.933 | 0.875 | 0.933 | 0.903 |
+| Gold | 0.806 | 0.893 | 0.806 | 0.847 |
+| Guppy | 1.000 | 0.906 | 1.000 | 0.951 |
+| Oscar | 0.727 | 0.696 | 0.727 | 0.711 |
+
+The optimized model was selected by validation loss, and it does achieve a substantially lower val loss (0.535 vs. the baseline's 0.616). Its raw test accuracy (0.830) is slightly below the baseline's (0.856), but on this small of a test set that gap may simply be noise. The heavier dropout trades a little peak accuracy for more reliable confidence, and it improves the weakest class (`Cray` precision rises from 0.500 to 0.667). `Guppy` is perfectly recalled by both models, while `Cray` is the hardest given the small sample size.
+
+**NOTE:** The trained weights, curve figures, and full result JSONs are not committed to preserve space; they are regenerated by `run_full_pipeline.sh`.

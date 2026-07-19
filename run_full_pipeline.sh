@@ -1,58 +1,32 @@
 #!/usr/bin/env bash
+# Set up the environment (if needed) and run HW3 parts 2-5 in order.
 
-set -uo pipefail
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# Setup paths and variables for runner.
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$ROOT"
-
-VENV="$ROOT/.venv"
+VENV=".venv"
 PY="$VENV/bin/python"
-LOG="$ROOT/logs/full_pipeline_$(date +%Y%m%d_%H%M%S).log"
-SKIP=0
+export PYTHONUNBUFFERED=1
 
-# You don't have to hit enter after each step if you --skip.
-[[ "${1:-}" == "-s" || "${1:-}" == "--skip" ]] && SKIP=1
+# Create venv and install dependencies.
+[[ -d "$VENV" ]] || python3 -m venv "$VENV"
+"$VENV/bin/pip" install -r requirements.txt
 
-mkdir -p "$(dirname "$LOG")"
-export PYTHONUNBUFFERED=1   # So tqdm progress doesn't get mangled by buffer.
-
-log() { echo -e "$*" | tee -a "$LOG"; }
-
-pause() {
-    [[ "$SKIP" -eq 1 || ! -t 0 ]] && return
-    read -rsn1 -p ">>> Press any key to continue ('q' to quit)... " key; echo
-    [[ "$key" == "q" ]] && { log "Aborted."; exit 0; }
-}
-
-run() {
-    pause
-    log "\n=== $1 ==="
-    "$PY" "$2" 2>&1 | tee -a "$LOG"
-    local rc=${PIPESTATUS[0]} # Capture exit code and log failure.
-    [[ $rc -ne 0 ]] && { log "!! FAILED (exit $rc)"; exit "$rc"; }
-}
-
-# Welcome message.
-log "CS898BA Project 1 - Full Pipeline Runner"
-log "Log: $LOG"
-
-# Create, activate, and install dependencies in python virtual environment.
-if [[ ! -d "$VENV" ]]; then
-    log "Creating .venv..."
-    python3 -m venv "$VENV" 2>&1 | tee -a "$LOG"
+# torch/torchvision need the CUDA 12.8 nightly wheels for the RTX 5090 (sm_120).
+if ! "$PY" -c "import torch, torchvision" 2>/dev/null; then
+    "$VENV/bin/pip" install --pre --no-cache-dir torch \
+        --index-url https://download.pytorch.org/whl/nightly/cu128
+    "$VENV/bin/pip" install --pre --no-cache-dir --no-deps torchvision \
+        --index-url https://download.pytorch.org/whl/nightly/cu128
 fi
-source "$VENV/bin/activate"
 
-log "Installing requirements..."
-"$VENV/bin/pip" install -r requirements.txt 2>&1 | tee -a "$LOG"
+# Extract the fish dataset if it hasn't been unpacked yet.
+if ! find assets/Fish -name '*.jpg' 2>/dev/null | grep -q .; then
+    "$PY" -c "import py7zr; py7zr.SevenZipFile('assets/Fish.7z','r').extractall('assets/')"
+fi
 
-# Finally run the pipeline parts in order. Skipping hello world.
-run "Part 2 - Basic statistics"   part02/basic_statistics.py
-run "Part 2 - Color spaces"       part02/color_spaces.py
-run "Part 2 - Affine transforms"  part02/affine_transforms.py
-run "Part 2 - Gaussian blur"      part02/gaussian_blur.py
-run "Part 3 - Edge detection"     part03/edge_detection.py
-
-# Done.
-log "\nPipeline complete ($(date '+%F %T'))."
+# Run the pipeline parts in order.
+"$PY" part02/data.py
+"$PY" part03/train.py
+"$PY" part04/tune.py
+"$PY" part05/evaluate.py
